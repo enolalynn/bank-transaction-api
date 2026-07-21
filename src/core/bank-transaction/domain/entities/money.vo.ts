@@ -4,7 +4,10 @@ export class Money {
       throw new Error('Invalid monetary amount');
     }
   }
-  public toFormatted(): string {
-    return (this.amountInCent / 100).toFixed(2);
+  public static fromDecimal(amount: number): Money {
+    return new Money(Math.round(amount * 100));
+  }
+  public toDecimal(): number {
+    return this.amountInCent / 100;
   }
 }

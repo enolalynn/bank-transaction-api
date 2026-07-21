@@ -5,4 +5,7 @@ export interface IBankTransferRepository {
     tranfer: BankTransfer,
     tx?: Prisma.TransactionClient,
   ): Promise<BankTransfer>;
+
+  findById(id: string): Promise<BankTransfer | null>;
+  findAll(): Promise<BankTransfer[] | null>;
 }

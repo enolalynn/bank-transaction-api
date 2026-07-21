@@ -1,9 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 import { TransactionStatus } from '@prisma/client';
+import { Money } from './money.vo';
 
 export interface BankTransferProps {
   id?: string;
-  amount: number;
+  amount: Money;
   senderId: string;
   senderName?: string | null;
   receiverId: string;
@@ -16,7 +17,7 @@ export class BankTransfer {
     this.validate();
   }
   private validate(): void {
-    if (this.props.amount <= 0) {
+    if (this.props.amount.amountInCent <= 0) {
       throw new BadRequestException(
         'Transfer amount must be greater than zero',
       );
@@ -53,14 +54,14 @@ export class BankTransfer {
   get receiverId(): string {
     return this.props.receiverId;
   }
-  get amount(): number {
+  get amount(): Money {
     return this.props.amount;
   }
 
   public toPrimitives() {
     return {
       id: this.props.id,
-      amount: this.props.amount,
+      amount: this.props.amount.toDecimal(),
       senderId: this.props.senderId,
       senderName: this.props.senderName,
       receiverId: this.props.receiverId,

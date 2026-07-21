@@ -16,7 +16,7 @@ model Account{
   id String @id @default(cuid())
   ownerName String
   nrcNo String @unique
-  balance Decimal @default(0.0)
+  balance Decimal @db.Decimal(20,2)
   createdAt   DateTime @default(now())
   sentTransaction BankTransaction[] @relation("Sender")
   receivedTransaction BankTransaction[] @relation("Receiver")
@@ -24,7 +24,7 @@ model Account{
 
 model BankTransaction{
   id String @id @default(cuid())
-  amount Decimal @default(0.0)
+  amount Decimal @db.Decimal(20,2)
   status TransactionStatus @default(PENDING)
 
   senderId String
