@@ -1,0 +1,3 @@
+export const REPOSITORY_TOKEN = {
+  BANK_TRANSFER: 'BANK_TRANSFER_REPOSITORY',
+} as const;
