@@ -1,18 +1,55 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { IBankTransferRepository } from '../domain/repository/bank-transfer.repository';
+  IBankTransferRepository,
+  ReconciliationDiscrepancy,
+} from '../domain/repository/bank-transfer.repository';
 import { BankTransfer } from '../domain/entities/bank-transfer.entity';
 import { PrismaService } from 'src/core/infrastructure/prisma.service';
 import { Money } from '../domain/entities/money.vo';
+import { Prisma } from '@prisma/client';
+import { Decimal } from '@prisma/client/runtime/library';
+import { AccountEntity } from '../domain/entities/account.entity';
 
 @Injectable()
 export class PrismaBankTransferRepository implements IBankTransferRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  async getAccountBalanceSnapshot(accountId: string): Promise<number> {
+    const account = await this.prisma.account.findUnique({
+      where: { id: accountId },
+      select: { balance: true },
+    });
+    return account ? Number(account.balance) : 0;
+  }
+
+  async reconcileAllAccounts(): Promise<ReconciliationDiscrepancy[]> {
+    const accounts = await this.prisma.account.findMany({
+      select: { id: true, balance: true },
+    });
+    const discrepencies: ReconciliationDiscrepancy[] = [];
+    for (const acc of accounts) {
+      const snapshotBalance = Number(acc.balance);
+      const ledgerSumResult = await this.prisma.ledgerEntry.aggregate({
+        where: { accountId: acc.id },
+        _sum: { amount: true },
+      });
+      const ledgerBalance = ledgerSumResult._sum.amount
+        ? Number(ledgerSumResult._sum.amount)
+        : 0;
+      if (Math.abs(snapshotBalance - ledgerBalance) > 0.001) {
+        discrepencies.push({
+          accountId: acc.id,
+          snapshotBalance,
+          ledgerBalance,
+          difference: snapshotBalance - ledgerBalance,
+        });
+      }
+    }
+    return discrepencies;
+  }
+
   async findById(id: string): Promise<BankTransfer | null> {
     const find = await this.prisma.bankTransaction.findUnique({
       where: { id },
@@ -31,73 +68,105 @@ export class PrismaBankTransferRepository implements IBankTransferRepository {
     return findAll.map((item) => this.toDomain(item));
   }
 
-  async bankTransfer(transfer: BankTransfer): Promise<BankTransfer> {
+  async bankTransfer(
+    transfer: BankTransfer,
+    idempotencyKey?: string,
+  ): Promise<BankTransfer> {
     const { senderId, receiverId, amount } = transfer.toPrimitives();
+    const transferMoney = Money.fromDecimal(amount);
 
-    try {
-      return await this.prisma.$transaction(async (tx) => {
-        const updateSender = await tx.account.updateMany({
-          where: { id: senderId, balance: { gte: amount } },
-          data: { balance: { decrement: amount } },
-        });
+    return await this.prisma.$transaction(
+      async (tx) => {
+        const sortedIds = [senderId, receiverId].sort();
+        const rawAccounts = await tx.$queryRaw<
+          Array<{
+            id: string;
+            ownerName: string;
+            nrcNo: string;
+            balance: Decimal;
+            status: string;
+          }>
+        >`SELECT id,"ownerName","nrcNo", balance, status FROM "Account" WHERE id IN (${Prisma.join(sortedIds)}) ORDER BY id ASC FOR UPDATE`;
 
-        if (updateSender.count === 0) {
-          throw new BadRequestException('INSUFFICIENT_FUNDS');
+        if (rawAccounts.length < 2) {
+          throw new NotFoundException({
+            code: 'ACCOUNT_NOT_FOUND',
+            message: 'One or both accounts do not exist',
+          });
         }
 
-        const updateReceiver = await tx.account.updateMany({
-          where: { id: receiverId },
-          data: { balance: { increment: amount } },
+        const senderRaw = rawAccounts.find((a) => a.id === senderId)!;
+        const receiverRaw = rawAccounts.find((a) => a.id === receiverId)!;
+
+        const senderAccount = AccountEntity.reconstitute({
+          id: senderRaw.id,
+          ownerName: senderRaw.ownerName,
+          nrcNo: senderRaw.nrcNo,
+          balance: Money.fromDecimal(Number(senderRaw.balance)),
+          status: senderRaw.status as any,
         });
-
-        if (updateReceiver.count === 0) {
-          throw new NotFoundException('RECEIVER_NOT_FOUND');
-        }
-
+        const receiverAccount = AccountEntity.reconstitute({
+          id: receiverRaw.id,
+          ownerName: receiverRaw.ownerName,
+          nrcNo: receiverRaw.nrcNo,
+          balance: Money.fromDecimal(Number(receiverRaw.balance)),
+          status: receiverRaw.status as any,
+        });
+        senderAccount.debit(transferMoney);
+        receiverAccount.credit(transferMoney);
         transfer.markAsCompleted();
 
-        const record = await tx.bankTransaction.create({
+        const transactionRecord = await tx.bankTransaction.create({
           data: {
             senderId,
             receiverId,
             amount,
             status: transfer.toPrimitives().status,
+            idempotencyKey,
           },
-          select: {
-            id: true,
-            createdAt: true,
-            sender: true,
-            receiver: true,
-            amount: true,
-            status: true,
+        });
+        await tx.account.update({
+          where: { id: senderId },
+          data: { balance: senderAccount.balance.toDecimal() },
+        });
+        await tx.account.update({
+          where: { id: receiverId },
+          data: { balance: receiverAccount.balance.toDecimal() },
+        });
+        //DEBIT
+        await tx.ledgerEntry.create({
+          data: {
+            accountId: senderId,
+            transactionId: transactionRecord.id,
+            amount: -amount,
+            type: 'DEBIT',
+            balanceAfter: senderAccount.balance.toDecimal(),
+          },
+        });
+        //CREDIT
+        await tx.ledgerEntry.create({
+          data: {
+            accountId: receiverId,
+            transactionId: transactionRecord.id,
+            type: 'CREDIT',
+            amount: amount,
+            balanceAfter: receiverAccount.balance.toDecimal(),
           },
         });
 
         return BankTransfer.reconstitute({
-          id: record.id,
-          amount: Money.fromDecimal(Number(record.amount)),
-          senderId: record.sender.id,
-          senderName: record.sender.ownerName,
-          receiverId: record.receiver.id,
-          receiverName: record.receiver.ownerName,
-          status: record.status,
-          createdAt: record.createdAt,
+          id: transactionRecord.id,
+          amount: Money.fromDecimal(Number(transactionRecord.amount)),
+          senderId: senderId,
+          senderName: senderAccount.ownerName,
+          receiverId: receiverId,
+          receiverName: receiverAccount.ownerName,
+          status: transactionRecord.status,
+          createdAt: transactionRecord.createdAt,
         });
-      });
-    } catch (error) {
-      transfer.markAsFailed();
-
-      await this.prisma.bankTransaction.create({
-        data: {
-          senderId,
-          receiverId,
-          amount,
-          status: transfer.toPrimitives().status,
-        },
-      });
-
-      throw error;
-    }
+      },
+      { timeout: 10000 },
+    );
   }
 
   private toDomain(record: any): BankTransfer {

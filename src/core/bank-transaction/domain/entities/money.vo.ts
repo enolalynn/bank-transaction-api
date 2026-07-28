@@ -10,4 +10,19 @@ export class Money {
   public toDecimal(): number {
     return this.amountInCent / 100;
   }
+
+  public add(other: Money): Money {
+    return new Money(this.amountInCent + other.amountInCent);
+  }
+
+  public substract(other: Money): Money {
+    if (this.amountInCent < other.amountInCent) {
+      throw new Error('Insufficient funds for substract');
+    }
+    return new Money(this.amountInCent - other.amountInCent);
+  }
+
+  public isGreaterThan(other: Money): boolean {
+    return this.amountInCent > other.amountInCent;
+  }
 }

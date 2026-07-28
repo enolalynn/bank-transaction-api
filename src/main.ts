@@ -8,7 +8,7 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('Transaction')
-    .setDescription('The transaction API for testing')
+    .setDescription('The transaction API for practice')
     .setVersion('1.0')
     .addTag('transations')
     .build();
@@ -17,7 +17,6 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      // whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
     }),

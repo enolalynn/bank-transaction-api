@@ -16,14 +16,18 @@ model Account{
   id String @id @default(cuid())
   ownerName String
   nrcNo String @unique
-  balance Decimal @db.Decimal(20,2)
+  balance Decimal @default(0) @db.Decimal(20,2)
+  status AccountStatus @default(ACTIVE)
   createdAt   DateTime @default(now())
   sentTransaction BankTransaction[] @relation("Sender")
   receivedTransaction BankTransaction[] @relation("Receiver")
+  ledgerEntries LedgerEntry[]
 }
 
 model BankTransaction{
   id String @id @default(cuid())
+  idempotencyKey String? @unique
+
   amount Decimal @db.Decimal(20,2)
   status TransactionStatus @default(PENDING)
 
@@ -34,11 +38,35 @@ model BankTransaction{
   receiver Account @relation("Receiver", fields: [receiverId], references: [id])
 
   createdAt DateTime @default(now())
+  ledgerEntries LedgerEntry[]
+}
 
+model LedgerEntry{
+  id String @id @default(cuid())
+  accountId String
+  account Account @relation(references: [id], fields: [accountId])
+  transactionId String
+  transaction BankTransaction @relation(references: [id], fields: [transactionId])
+  type EntryType
+  amount Decimal @db.Decimal(20,2)
+  balanceAfter Decimal @db.Decimal(20,2)
+  createdAt DateTime @default(now())
+  @@index([accountId])
+}
+
+enum AccountStatus{
+  ACTIVE
+  FROZEN
+  SUSPENDED
 }
 
 enum TransactionStatus{
   PENDING
   SUCCESS
   FAILED
+}
+
+enum EntryType{
+  CREDIT
+  DEBIT
 }

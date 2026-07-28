@@ -1,6 +1,6 @@
-import { BadRequestException } from '@nestjs/common';
 import { TransactionStatus } from '@prisma/client';
 import { Money } from './money.vo';
+import { InvalidTransferException } from 'src/common/exceptions/domain.exception';
 
 export interface BankTransferProps {
   id?: string;
@@ -18,12 +18,12 @@ export class BankTransfer {
   }
   private validate(): void {
     if (this.props.amount.amountInCent <= 0) {
-      throw new BadRequestException(
+      throw new InvalidTransferException(
         'Transfer amount must be greater than zero',
       );
     }
     if (this.props.senderId === this.props.receiverId) {
-      throw new BadRequestException(
+      throw new InvalidTransferException(
         'Sender and receiver cannot be the same account',
       );
     }

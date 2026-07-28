@@ -15,6 +15,7 @@ async function main() {
       ownerName: 'Aung Aung',
       nrcNo: '12/MAMANA(N)123456',
       balance: 500000.0, // Initial balance of 500,000
+      status: 'ACTIVE',
     },
   });
 
@@ -24,6 +25,7 @@ async function main() {
       ownerName: 'Kyaw Kyaw',
       nrcNo: '12/DAGANA(N)654321',
       balance: 50000.0, // Initial balance of 50,000
+      status: 'ACTIVE',
     },
   });
 
@@ -33,11 +35,13 @@ async function main() {
       id: sender.id,
       name: sender.ownerName,
       balance: sender.balance.toString(),
+      status: 'ACTIVE',
     },
     receiver: {
       id: receiver.id,
       name: receiver.ownerName,
       balance: receiver.balance.toString(),
+      status: 'ACTIVE',
     },
   });
 }

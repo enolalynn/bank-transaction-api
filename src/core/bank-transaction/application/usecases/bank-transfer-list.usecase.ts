@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { REPOSITORY_TOKEN } from 'src/constants/repository.config';
+import { REPOSITORY_TOKEN } from 'src/common/constants/repository.config';
 import type { IBankTransferRepository } from '../../domain/repository/bank-transfer.repository';
 import { BankTransferMapper } from '../mapper/bank-transfer.mapper';
 
