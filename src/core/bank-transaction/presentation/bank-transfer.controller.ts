@@ -16,6 +16,8 @@ import { GetOneBankTransactionUsecase } from '../application/usecases/get-one-tr
 import { BankTransactionResponse } from '../application/dtos/bank-tansfer-response.dto';
 import { GetAccountBalanceUsecase } from '../application/usecases/get-account-balance.usecase';
 import { ReconcileLedgerUsecase } from '../application/usecases/reconcile-ledger.usecase';
+import { GetPendingOutboxEventsUsecase } from '../application/usecases/get-pending-outbox-events.usecase';
+import { RetryFailedEventsUsecase } from '../application/usecases/retry-failed-events.usecase';
 
 @ApiTags('Bank Transaction')
 @Controller()
@@ -26,6 +28,8 @@ export class BankTransferController {
     private readonly getOneUC: GetOneBankTransactionUsecase,
     private readonly getBalanceUC: GetAccountBalanceUsecase,
     private readonly reconciliationUC: ReconcileLedgerUsecase,
+    private readonly pendingEventsUC: GetPendingOutboxEventsUsecase,
+    private readonly retryUC: RetryFailedEventsUsecase,
   ) {}
   @ApiOperation({ description: 'Bank Transfer Process' })
   @HttpCode(HttpStatus.CREATED)
@@ -71,5 +75,18 @@ export class BankTransferController {
   async triggerReconciliation(): Promise<{ message: string }> {
     await this.reconciliationUC.execute();
     return { message: 'Reconciliation audit successfully complete...!' };
+  }
+
+  @ApiOperation({ summary: 'View pending/failed outbox event queued.' })
+  @Get('bank-transfer/outbox/pending')
+  async getPendingOutboxEvents() {
+    return this.pendingEventsUC.execute();
+  }
+
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Manually trigger retry for a failed outbox event' })
+  @Post('bank-transfer/outbox/:id/retry')
+  async retryEvents(@Param('id') id: string) {
+    return await this.retryUC.execute(id);
   }
 }

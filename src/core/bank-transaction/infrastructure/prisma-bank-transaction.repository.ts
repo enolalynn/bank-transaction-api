@@ -133,27 +133,41 @@ export class PrismaBankTransferRepository implements IBankTransferRepository {
           where: { id: receiverId },
           data: { balance: receiverAccount.balance.toDecimal() },
         });
-        //DEBIT
-        await tx.ledgerEntry.create({
-          data: {
-            accountId: senderId,
-            transactionId: transactionRecord.id,
-            amount: -amount,
-            type: 'DEBIT',
-            balanceAfter: senderAccount.balance.toDecimal(),
-          },
-        });
-        //CREDIT
-        await tx.ledgerEntry.create({
-          data: {
-            accountId: receiverId,
-            transactionId: transactionRecord.id,
-            type: 'CREDIT',
-            amount: amount,
-            balanceAfter: receiverAccount.balance.toDecimal(),
-          },
+
+        await tx.ledgerEntry.createMany({
+          data: [
+            {
+              accountId: senderId,
+              transactionId: transactionRecord.id,
+              amount: amount,
+              type: 'DEBIT',
+              balanceAfter: senderAccount.balance.toDecimal(),
+            },
+            {
+              accountId: receiverId,
+              transactionId: transactionRecord.id,
+              type: 'CREDIT',
+              amount: amount,
+              balanceAfter: receiverAccount.balance.toDecimal(),
+            },
+          ],
         });
 
+        await tx.outboxEvent.create({
+          data: {
+            aggregateType: 'BANK_TRANSFER',
+            aggregateId: transactionRecord.id,
+            eventType: 'TRANSFER_COMPLETED',
+            payload: {
+              transactionId: transactionRecord.id,
+              senderId,
+              receiverId,
+              amount,
+              completedAt: new Date().toISOString(),
+            },
+            processedAt: null,
+          },
+        });
         return BankTransfer.reconstitute({
           id: transactionRecord.id,
           amount: Money.fromDecimal(Number(transactionRecord.amount)),

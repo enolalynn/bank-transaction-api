@@ -39,6 +39,7 @@ model BankTransaction{
 
   createdAt DateTime @default(now())
   ledgerEntries LedgerEntry[]
+  outboxEvents OutboxEvent[]
 }
 
 model LedgerEntry{
@@ -52,6 +53,21 @@ model LedgerEntry{
   balanceAfter Decimal @db.Decimal(20,2)
   createdAt DateTime @default(now())
   @@index([accountId])
+}
+
+model OutboxEvent{
+id String @id @default(cuid())
+aggregateType String // BANK_TRANSFER
+aggregateId String //transactionId
+eventType String // TRANSFER_COMPLETED
+payload Json  //Event payload details eg. amount, accountId etc
+status OutboxStatus @default(PENDING)
+retryCount Int @default(0)
+errorMessage String?
+createdAt DateTime @default(now())
+processedAt DateTime?
+transaction BankTransaction @relation(references: [id],fields: [aggregateId])
+@@index([status,createdAt])
 }
 
 enum AccountStatus{
@@ -69,4 +85,11 @@ enum TransactionStatus{
 enum EntryType{
   CREDIT
   DEBIT
+}
+
+enum OutboxStatus{
+  PENDING
+  PROCESSING
+  PROCESSED
+  FAILED
 }
