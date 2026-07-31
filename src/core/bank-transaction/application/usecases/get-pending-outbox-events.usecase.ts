@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from 'src/core/infrastructure/prisma.service';
+import { PrismaService } from 'src/core/infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class GetPendingOutboxEventsUsecase {

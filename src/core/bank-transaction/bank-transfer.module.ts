@@ -8,12 +8,14 @@ import { BankTransferListUsecase } from './application/usecases/bank-transfer-li
 import { GetOneBankTransactionUsecase } from './application/usecases/get-one-transaction.usecase';
 import { ReconcileLedgerUsecase } from './application/usecases/reconcile-ledger.usecase';
 import { GetAccountBalanceUsecase } from './application/usecases/get-account-balance.usecase';
-import { OutboxProcessorService } from './infrastructure/outbox-processor.service';
+import { OutboxProcessorService } from '../infrastructure/outbox/outbox-processor.service';
 import { GetPendingOutboxEventsUsecase } from './application/usecases/get-pending-outbox-events.usecase';
 import { RetryFailedEventsUsecase } from './application/usecases/retry-failed-events.usecase';
+import { UploadKycUsecase } from './application/usecases/upload-kyc.usecase';
+import { StorageModule } from '../infrastructure/storage.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, StorageModule],
   controllers: [BankTransferController],
   providers: [
     CreateBankTransferUsecase,
@@ -24,6 +26,7 @@ import { RetryFailedEventsUsecase } from './application/usecases/retry-failed-ev
     OutboxProcessorService,
     GetPendingOutboxEventsUsecase,
     RetryFailedEventsUsecase,
+    UploadKycUsecase,
     {
       provide: REPOSITORY_TOKEN.BANK_TRANSFER,
       useClass: PrismaBankTransferRepository,

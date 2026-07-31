@@ -1,15 +1,27 @@
 import {
   Body,
   Controller,
+  FileTypeValidator,
   Get,
   Headers,
   HttpCode,
   HttpStatus,
+  MaxFileSizeValidator,
   Param,
+  ParseFilePipe,
   Post,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CreateBankTransferUsecase } from '../application/usecases/create-bank-transfer.usecase';
-import { ApiHeader, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CreateBankTransactionDto } from '../application/dtos/create-bank-transaction.dto';
 import { BankTransferListUsecase } from '../application/usecases/bank-transfer-list.usecase';
 import { GetOneBankTransactionUsecase } from '../application/usecases/get-one-transaction.usecase';
@@ -18,6 +30,8 @@ import { GetAccountBalanceUsecase } from '../application/usecases/get-account-ba
 import { ReconcileLedgerUsecase } from '../application/usecases/reconcile-ledger.usecase';
 import { GetPendingOutboxEventsUsecase } from '../application/usecases/get-pending-outbox-events.usecase';
 import { RetryFailedEventsUsecase } from '../application/usecases/retry-failed-events.usecase';
+import { UploadKycUsecase } from '../application/usecases/upload-kyc.usecase';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Bank Transaction')
 @Controller()
@@ -30,6 +44,7 @@ export class BankTransferController {
     private readonly reconciliationUC: ReconcileLedgerUsecase,
     private readonly pendingEventsUC: GetPendingOutboxEventsUsecase,
     private readonly retryUC: RetryFailedEventsUsecase,
+    private readonly uploadKycUC: UploadKycUsecase,
   ) {}
   @ApiOperation({ description: 'Bank Transfer Process' })
   @HttpCode(HttpStatus.CREATED)
@@ -88,5 +103,36 @@ export class BankTransferController {
   @Post('bank-transfer/outbox/:id/retry')
   async retryEvents(@Param('id') id: string) {
     return await this.retryUC.execute(id);
+  }
+
+  @ApiConsumes('multipart/form-data')
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('accounts/:id/kyc')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  async uploadKyc(
+    @Param('id') accountId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: /(jpg|jpeg|png|pdf)$/ }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return await this.uploadKycUC.execute(accountId, file);
   }
 }

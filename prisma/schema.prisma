@@ -22,7 +22,9 @@ model Account{
   sentTransaction BankTransaction[] @relation("Sender")
   receivedTransaction BankTransaction[] @relation("Receiver")
   ledgerEntries LedgerEntry[]
+  kycDocuments KycDocument[]
 }
+
 
 model BankTransaction{
   id String @id @default(cuid())
@@ -40,6 +42,7 @@ model BankTransaction{
   createdAt DateTime @default(now())
   ledgerEntries LedgerEntry[]
   outboxEvents OutboxEvent[]
+
 }
 
 model LedgerEntry{
@@ -68,6 +71,26 @@ createdAt DateTime @default(now())
 processedAt DateTime?
 transaction BankTransaction @relation(references: [id],fields: [aggregateId])
 @@index([status,createdAt])
+}
+
+model KycDocument{
+id String @id @default(cuid())
+accountId String
+account Account @relation(references: [id],fields: [accountId])
+fileKey String
+fileName String
+mimeType String
+fileSize Int
+status KycStatus @default(PENDING)
+createdAt DateTime @default(now())
+@@index([accountId])
+
+}
+
+enum KycStatus{
+  PENDING
+  VERIFIED
+  REJECTED
 }
 
 enum AccountStatus{

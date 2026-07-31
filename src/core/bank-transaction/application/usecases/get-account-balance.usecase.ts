@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { REPOSITORY_TOKEN } from 'src/common/constants/repository.config';
 import type { IBankTransferRepository } from '../../domain/repository/bank-transfer.repository';
-import { PrismaService } from 'src/core/infrastructure/prisma.service';
+import { PrismaService } from 'src/core/infrastructure/prisma/prisma.service';
 import { AccountBalanceResponseDto } from '../dtos/account-balance-reponse.dto';
 
 @Injectable()

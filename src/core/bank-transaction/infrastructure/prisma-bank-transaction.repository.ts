@@ -6,7 +6,7 @@ import {
   ReconciliationDiscrepancy,
 } from '../domain/repository/bank-transfer.repository';
 import { BankTransfer } from '../domain/entities/bank-transfer.entity';
-import { PrismaService } from 'src/core/infrastructure/prisma.service';
+import { PrismaService } from 'src/core/infrastructure/prisma/prisma.service';
 import { Money } from '../domain/entities/money.vo';
 import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { PrismaService } from 'src/core/infrastructure/prisma.service';
+import { PrismaService } from 'src/core/infrastructure/prisma/prisma.service';
 
 @Injectable()
 export class OutboxProcessorService {
