@@ -16,6 +16,9 @@ model Account{
   id String @id @default(cuid())
   ownerName String
   nrcNo String @unique
+  phoneNo String @unique
+  email String @unique
+  password String
   balance Decimal @default(0) @db.Decimal(20,2)
   status AccountStatus @default(ACTIVE)
   createdAt   DateTime @default(now())
