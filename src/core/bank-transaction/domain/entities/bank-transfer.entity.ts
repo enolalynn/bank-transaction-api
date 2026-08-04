@@ -51,8 +51,14 @@ export class BankTransfer {
   get senderId(): string {
     return this.props.senderId;
   }
+  get senderName(): string | null {
+    return this.props.senderName ?? null;
+  }
   get receiverId(): string {
     return this.props.receiverId;
+  }
+  get receiverName(): string | null {
+    return this.props.receiverName ?? null;
   }
   get amount(): Money {
     return this.props.amount;
