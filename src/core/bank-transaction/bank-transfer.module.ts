@@ -13,6 +13,7 @@ import { GetPendingOutboxEventsUsecase } from './application/usecases/get-pendin
 import { RetryFailedEventsUsecase } from './application/usecases/retry-failed-events.usecase';
 import { UploadKycUsecase } from './application/usecases/upload-kyc.usecase';
 import { StorageModule } from '../infrastructure/storage.module';
+import { AccountStatementService } from './application/services/statement.service';
 
 @Module({
   imports: [PrismaModule, StorageModule],
@@ -27,6 +28,7 @@ import { StorageModule } from '../infrastructure/storage.module';
     GetPendingOutboxEventsUsecase,
     RetryFailedEventsUsecase,
     UploadKycUsecase,
+    AccountStatementService,
     {
       provide: REPOSITORY_TOKEN.BANK_TRANSFER,
       useClass: PrismaBankTransferRepository,

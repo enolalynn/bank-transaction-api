@@ -1,3 +1,4 @@
+import { AccountStatementAggregate } from '../aggregates/account-statement.aggregate';
 import { BankTransfer } from '../entities/bank-transfer.entity';
 export interface ReconciliationDiscrepancy {
   accountId: string;
@@ -6,13 +7,16 @@ export interface ReconciliationDiscrepancy {
   difference: number;
 }
 
-export interface IBankTransferRepository {
-  bankTransfer(
+export abstract class IBankTransferRepository {
+  abstract bankTransfer(
     tranfer: BankTransfer,
     idempotencyKey?: string,
   ): Promise<BankTransfer>;
-  findById(id: string): Promise<BankTransfer | null>;
-  findAll(): Promise<BankTransfer[] | null>;
-  getAccountBalanceSnapshot(accountId: string): Promise<number>;
-  reconcileAllAccounts(): Promise<ReconciliationDiscrepancy[]>;
+  abstract findById(id: string): Promise<BankTransfer | null>;
+  abstract findAll(): Promise<BankTransfer[] | null>;
+  abstract getAccountBalanceSnapshot(accountId: string): Promise<number>;
+  abstract reconcileAllAccounts(): Promise<ReconciliationDiscrepancy[]>;
+  abstract getAccountWithTransaction(
+    accountId: string,
+  ): Promise<AccountStatementAggregate>;
 }

@@ -10,6 +10,7 @@ import {
   Param,
   ParseFilePipe,
   Post,
+  Res,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -32,6 +33,8 @@ import { GetPendingOutboxEventsUsecase } from '../application/usecases/get-pendi
 import { RetryFailedEventsUsecase } from '../application/usecases/retry-failed-events.usecase';
 import { UploadKycUsecase } from '../application/usecases/upload-kyc.usecase';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
+import { AccountStatementService } from '../application/services/statement.service';
 
 @ApiTags('Bank Transaction')
 @Controller()
@@ -45,6 +48,7 @@ export class BankTransferController {
     private readonly pendingEventsUC: GetPendingOutboxEventsUsecase,
     private readonly retryUC: RetryFailedEventsUsecase,
     private readonly uploadKycUC: UploadKycUsecase,
+    private readonly statementUC: AccountStatementService,
   ) {}
   @ApiOperation({ description: 'Bank Transfer Process' })
   @HttpCode(HttpStatus.CREATED)
@@ -134,5 +138,15 @@ export class BankTransferController {
     file: Express.Multer.File,
   ) {
     return await this.uploadKycUC.execute(accountId, file);
+  }
+
+  @Get('accounts/:id/statement/excel')
+  async excelStatement(@Param('id') accountId: string, @Res() res: Response) {
+    return await this.statementUC.exportExcel(accountId, res);
+  }
+
+  @Get('accounts/:id/statement/pdf')
+  async pdfStatement(@Param('id') accountId: string, @Res() res: Response) {
+    return await this.statementUC.exportPdf(accountId, res);
   }
 }

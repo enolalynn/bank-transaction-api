@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { REPOSITORY_TOKEN } from 'src/common/constants/repository.config';
-import type { IBankTransferRepository } from '../../domain/repository/bank-transfer.repository';
+import { IBankTransferRepository } from '../../domain/repository/bank-transfer.repository';
 import { BankTransfer } from '../../domain/entities/bank-transfer.entity';
 import { CreateBankTransactionDto } from '../dtos/create-bank-transaction.dto';
 import { BankTransferMapper } from '../mapper/bank-transfer.mapper';

@@ -11,10 +11,40 @@ import { Money } from '../domain/entities/money.vo';
 import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { AccountEntity } from '../domain/entities/account.entity';
+import { AccountStatementAggregate } from '../domain/aggregates/account-statement.aggregate';
+import { AccountStatementMapper } from '../application/mapper/account-statement.mapper';
+
+const accountWithTransactionsInclude =
+  Prisma.validator<Prisma.AccountDefaultArgs>()({
+    include: {
+      ledgerEntries: {
+        include: { transaction: true },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  });
+
+export type AccountWithTransactionsRaw = Prisma.AccountGetPayload<
+  typeof accountWithTransactionsInclude
+>;
 
 @Injectable()
 export class PrismaBankTransferRepository implements IBankTransferRepository {
   constructor(private readonly prisma: PrismaService) {}
+  async getAccountWithTransaction(
+    accountId: string,
+  ): Promise<AccountStatementAggregate> {
+    const acc = await this.prisma.account.findUnique({
+      where: { id: accountId },
+      include: accountWithTransactionsInclude.include,
+    });
+    if (!acc)
+      throw new NotFoundException({
+        code: 'ACCOUNT_NOT_FOUND',
+        message: 'Account not found',
+      });
+    return AccountStatementMapper.toDomain(acc);
+  }
 
   async getAccountBalanceSnapshot(accountId: string): Promise<number> {
     const account = await this.prisma.account.findUnique({
