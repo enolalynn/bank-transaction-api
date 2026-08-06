@@ -61,7 +61,10 @@ export class AccountStatementService {
     doc.text(`NRC No: ${account.nrcNo}`);
     doc.text(`Current Balance: $${account.balance.toDecimal()}`);
     doc.moveDown();
-    doc.text('--------------------------------------------');
+    doc.text(
+      '-----------------------------------------------------------------------------------------------------------',
+      { align: 'center' },
+    );
     doc.fontSize(14).text(`Transaction History:`, { underline: true });
     doc.moveDown(0.5);
     account.ledgerEntries.forEach((entry, index) => {

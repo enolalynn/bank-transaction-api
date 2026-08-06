@@ -1,5 +1,5 @@
 import { AccountStatementAggregate } from '../../domain/aggregates/account-statement.aggregate';
-import { Money } from '../../domain/entities/money.vo';
+import { Money } from '../../../../common/value-objects/money.vo';
 import { AccountWithTransactionsRaw } from '../../infrastructure/prisma-bank-transaction.repository';
 
 export class AccountStatementMapper {

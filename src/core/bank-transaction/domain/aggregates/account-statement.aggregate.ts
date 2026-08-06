@@ -1,4 +1,4 @@
-import { Money } from '../entities/money.vo';
+import { Money } from '../../../../common/value-objects/money.vo';
 
 export interface LedgerEntryItem {
   id: string;

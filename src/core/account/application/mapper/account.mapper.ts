@@ -4,7 +4,7 @@ import { NrcNo } from 'src/common/value-objects/nrc.vo';
 import { PhoneNo } from 'src/common/value-objects/phone.vo';
 import { Email } from 'src/common/value-objects/email.vo';
 import { BankTransfer } from 'src/core/bank-transaction/domain/entities/bank-transfer.entity';
-import { Money } from 'src/core/bank-transaction/domain/entities/money.vo';
+import { Money } from 'src/common/value-objects/money.vo';
 import { AccountResponseDto } from '../dtos/account-response.dto';
 
 export type PrismaAccountWithTransactions = PrismaAccount & {

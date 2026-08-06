@@ -1,5 +1,5 @@
 import { TransactionStatus } from '@prisma/client';
-import { Money } from './money.vo';
+import { Money } from '../../../../common/value-objects/money.vo';
 import { InvalidTransferException } from 'src/common/exceptions/domain.exception';
 
 export interface BankTransferProps {

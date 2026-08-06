@@ -7,7 +7,7 @@ import {
 } from '../domain/repository/bank-transfer.repository';
 import { BankTransfer } from '../domain/entities/bank-transfer.entity';
 import { PrismaService } from 'src/core/infrastructure/prisma/prisma.service';
-import { Money } from '../domain/entities/money.vo';
+import { Money } from '../../../common/value-objects/money.vo';
 import { Prisma } from '@prisma/client';
 import { Decimal } from '@prisma/client/runtime/library';
 import { AccountEntity } from '../domain/entities/account.entity';

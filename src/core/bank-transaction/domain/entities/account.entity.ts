@@ -1,5 +1,5 @@
 import { AccountStatus } from '@prisma/client';
-import { Money } from './money.vo';
+import { Money } from '../../../../common/value-objects/money.vo';
 import {
   InactiveAccountException,
   InsufficientFundException,

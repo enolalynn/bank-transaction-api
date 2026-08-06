@@ -5,7 +5,7 @@ import { BankTransfer } from '../../domain/entities/bank-transfer.entity';
 import { CreateBankTransactionDto } from '../dtos/create-bank-transaction.dto';
 import { BankTransferMapper } from '../mapper/bank-transfer.mapper';
 import { BankTransactionResponse } from '../dtos/bank-tansfer-response.dto';
-import { Money } from '../../domain/entities/money.vo';
+import { Money } from '../../../../common/value-objects/money.vo';
 import { DomainException } from 'src/common/exceptions/domain.exception';
 
 @Injectable()
